@@ -712,21 +712,38 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
   })
 
   const togglePin = useCallback((route: Route) => {
-    setPinnedIds(prev => {
-      const next = new Set(prev)
-      if (next.has(route.id)) {
-        next.delete(route.id)
-      } else {
-        next.add(route.id)
-      }
-      // Persist full route objects so HomePage can display them
+    try {
+      // Read current stored pinned routes (source of truth)
+      const raw = localStorage.getItem("fcalendar_pinned_routes") || "[]"
+      const stored = JSON.parse(raw) as Array<{ id?: string; name?: string; code?: string; shift?: string }>
+      const ids = new Set(stored.map(item => item.id).filter((id): id is string => Boolean(id)))
+
+      if (ids.has(route.id)) ids.delete(route.id)
+      else ids.add(route.id)
+
       const allPinned = routes
-        .filter(r => next.has(r.id))
+        .filter(r => ids.has(r.id))
         .map(r => ({ id: r.id, name: r.name, code: r.code, shift: r.shift }))
+
       localStorage.setItem("fcalendar_pinned_routes", JSON.stringify(allPinned))
       window.dispatchEvent(new Event("fcalendar_pins_changed"))
-      return next
-    })
+      setPinnedIds(new Set(allPinned.map(p => p.id)))
+    } catch {
+      // Fallback: ensure we at least toggle in-memory
+      setPinnedIds(prev => {
+        const next = new Set(prev)
+        if (next.has(route.id)) next.delete(route.id)
+        else next.add(route.id)
+        try {
+          const allPinned = routes
+            .filter(r => next.has(r.id))
+            .map(r => ({ id: r.id, name: r.name, code: r.code, shift: r.shift }))
+          localStorage.setItem("fcalendar_pinned_routes", JSON.stringify(allPinned))
+          window.dispatchEvent(new Event("fcalendar_pins_changed"))
+        } catch {}
+        return next
+      })
+    }
   }, [routes])
 
   useEffect(() => {
@@ -2263,9 +2280,9 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
         <div className="pointer-events-none absolute inset-0 -z-10" />
         {/* Page header */}
         <div className="mb-6 sm:mb-7">
-          <div className="mb-2 flex items-center gap-2.5 sm:gap-3">
+            <div className="mb-2 flex items-center gap-2.5 sm:gap-3">
             <ClipboardList className="size-3.5 shrink-0 text-primary" />
-            <h2 className="text-[13px] font-semibold tracking-tight text-foreground">{pageTitle}</h2>
+            <h2 className="text-base font-semibold leading-tight text-foreground">{pageTitle}</h2>
           </div>
           <p className="ml-6 text-[11px] leading-relaxed text-muted-foreground/90 sm:ml-7">
             Manage route planning, stops, and delivery updates in one place.
@@ -2587,10 +2604,10 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
                       >
                         <span style={{ fontSize: '0.9rem' }}>{isPinnedCard ? '📌' : '📍'}</span>
                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '0.1rem' }}>
-                          <span style={{ fontSize: `calc(${(0.73 * Math.min(1, cardW / 340)).toFixed(2)}rem + 1px)`, fontWeight: 700, color: isPinnedCard ? markerColor : 'hsl(var(--muted-foreground))', letterSpacing: '0.03em', lineHeight: 1 }}>
+                          <span style={{ fontSize: `calc(${(0.73 * Math.min(1, cardW / 340)).toFixed(2)}rem + 3px)`, fontWeight: 700, color: isPinnedCard ? markerColor : 'hsl(var(--muted-foreground))', letterSpacing: '0.03em', lineHeight: 1 }}>
                             {isPinnedCard ? 'Pinned' : 'Pin'}
                           </span>
-                          <span style={{ fontSize: `calc(${(0.57 * Math.min(1, cardW / 340)).toFixed(2)}rem + 1px)`, color: 'hsl(var(--muted-foreground))', opacity: 0.75, lineHeight: 1, whiteSpace: 'nowrap' }}>
+                          <span style={{ fontSize: `calc(${(0.57 * Math.min(1, cardW / 340)).toFixed(2)}rem + 3px)`, color: 'hsl(var(--muted-foreground))', opacity: 0.75, lineHeight: 1, whiteSpace: 'nowrap' }}>
                             {isPinnedCard ? 'Tap to unpin' : 'Show on Home'}
                           </span>
                         </div>
@@ -2631,7 +2648,7 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
                       <>
                         <button
                           onClick={() => openRouteDetail(route.id)}
-                          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.3rem', fontSize: `calc(${badgeFs} + 1px)`, fontWeight: 700, color: isDark ? '#a0aab4' : markerColor, background: 'transparent', border: 'none', borderRadius: 0, padding: 0, cursor: 'pointer', transition: 'color 0.15s', width: '100%' }}
+                          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.3rem', fontSize: `calc(${badgeFs} + 3px)`, fontWeight: 700, color: isDark ? '#a0aab4' : markerColor, background: 'transparent', border: 'none', borderRadius: 0, padding: 0, cursor: 'pointer', transition: 'color 0.15s', width: '100%' }}
                           onMouseEnter={e => (e.currentTarget.style.color = isDark ? '#c0c7d0' : markerColor)}
                           onMouseLeave={e => (e.currentTarget.style.color = isDark ? '#a0aab4' : markerColor)}
                         >

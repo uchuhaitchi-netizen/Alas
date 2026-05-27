@@ -1099,7 +1099,7 @@ export function Rooster({ viewMode: viewModeProp = "week" }: { viewMode?: ViewMo
       <div className="px-4 sm:px-5 lg:px-6 pt-4 sm:pt-5 pb-2 shrink-0">
         <div className="mb-2 flex items-center gap-2.5 sm:gap-3">
           <Users className="size-3.5 text-primary" />
-          <h1 className="text-[13px] font-semibold tracking-tight text-foreground">Rooster</h1>
+          <h1 className="text-base font-semibold leading-tight text-foreground">Rooster</h1>
         </div>
         <p className="ml-6 text-[11px] leading-relaxed text-muted-foreground/90 sm:ml-7">Staff scheduling &amp; shift overview</p>
       </div>
